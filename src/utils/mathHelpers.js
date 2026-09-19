@@ -36,15 +36,21 @@ export const formatScientific = (num, precision = 4) => {
     return parseFloat(str).toLocaleString('id-ID');
   }
 
-  // Notasi ilmiah
+  // Notasi ilmiah dengan Unicode superscript rapi (tidak terbelah baris)
   const expStr = num.toExponential(precision);
   const [mantissa, exponent] = expStr.split('e');
   const expInt = parseInt(exponent, 10);
 
-  return `${parseFloat(mantissa)} × 10^${expInt}`;
+  const superscripts = {
+    '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+    '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+  };
+  const expUnicode = String(expInt).split('').map((c) => superscripts[c] || c).join('');
+
+  return `${parseFloat(mantissa)}\u00A0×\u00A010${expUnicode}`;
 };
 
-// Format ke LaTeX untuk notasi ilmiah
+// Format ke LaTeX untuk notasi ilmiah otentik
 export const formatScientificLatex = (num, precision = 4) => {
   if (num === null || num === undefined || isNaN(num)) return '\\text{NaN}';
   if (!isFinite(num)) return num > 0 ? '\\infty' : '-\\infty';

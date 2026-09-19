@@ -31,7 +31,7 @@ export const Navbar = ({
   // Tutup mobile drawer saat window di-resize ke ukuran desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && mobileMenuOpen) {
+      if (window.innerWidth >= 860 && mobileMenuOpen) {
         setMobileMenuOpen(false);
       }
     };

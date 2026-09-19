@@ -514,7 +514,11 @@ export const FormulaSolver = ({ targetPresetId }) => {
                 ) : calculationResult ? (
                   <div className="result-value-box">
                     <div className="main-number-glow">
-                      {calculationResult.formatted}
+                      {calculationResult.latexFormatted ? (
+                        <LatexRenderer math={calculationResult.latexFormatted} />
+                      ) : (
+                        calculationResult.formatted
+                      )}
                     </div>
                     {outputUnit && <span className="result-unit-label">{outputUnit}</span>}
 

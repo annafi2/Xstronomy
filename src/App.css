@@ -15,6 +15,8 @@
   padding: 30px 20px 80px;
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* ========================================================
@@ -1346,14 +1348,30 @@
 /* Solver 2-Column Grid */
 .solver-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 26px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .solver-col-main, .solver-col-results {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formula-editor-card,
+.variables-card,
+.preset-selector-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .formula-editor-card {
@@ -1626,9 +1644,13 @@
 }
 
 .result-display-card {
-  padding: 30px;
+  padding: 26px;
   border-color: rgba(56, 189, 248, 0.35);
   background: linear-gradient(135deg, rgba(16, 22, 54, 0.9), rgba(26, 20, 56, 0.8));
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .result-target-name {
@@ -1653,15 +1675,23 @@
 
 .result-value-box {
   margin-bottom: 24px;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .main-number-glow {
   font-family: var(--font-display);
-  font-size: 2.75rem;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.15;
+  line-height: 1.25;
   text-shadow: 0 0 24px rgba(56, 189, 248, 0.4);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .result-unit-label {
@@ -2387,7 +2417,7 @@
 /* ========================================================
    RESPONSIVE DESIGN (Tablets & Mobile)
    ======================================================== */
-@media (max-width: 1024px) {
+@media (max-width: 1120px) {
   .featured-hero-card {
     grid-template-columns: 1fr;
   }
@@ -2396,6 +2426,7 @@
   }
   .solver-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
   .footer-grid {
     grid-template-columns: 1fr 1fr;
@@ -2405,7 +2436,26 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1120px) and (min-width: 861px) {
+  .navbar-container {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .brand-tagline {
+    display: none;
+  }
+  .nav-link-btn {
+    padding: 7px 10px;
+    font-size: 0.84rem;
+    gap: 6px;
+  }
+  .admin-badge-active {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 860px) {
   .desktop-nav {
     display: none;
   }
@@ -3048,12 +3098,16 @@
   border: 1px solid rgba(56, 189, 248, 0.25);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .equation-ribbon-bar {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
 }
 
 .ribbon-title-tag {
@@ -3071,8 +3125,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ribbon-dropdown-container {
@@ -3080,15 +3135,15 @@
 }
 
 .ribbon-structure-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 6px 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   color: #cbd5e1;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -3138,6 +3193,39 @@
 .ribbon-visual-dialog-btn:hover {
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(56, 189, 248, 0.35)) !important;
   border-color: #a855f7 !important;
+}
+
+@media (max-width: 900px) {
+  .ribbon-visual-dialog-btn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Portal Table Wrapper */
+.portal-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Canvas Wrappers */
+.orbit-canvas-wrapper,
+.blackbody-canvas-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.orbit-canvas-wrapper canvas,
+.blackbody-canvas-wrapper canvas {
+  width: 100% !important;
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* Ribbon Dropdown Popover */
