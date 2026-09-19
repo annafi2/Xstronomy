@@ -1,0 +1,39 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Article {
+  id         String   @id @default(cuid())
+  title      String
+  category   String
+  author     String   @default("Admin Xstronomy")
+  date       String
+  readTime   String?  @default("4 menit baca")
+  coverImage String?
+  summary    String   @db.Text
+  content    String   @db.Text
+  tags       String[] @default([])
+  featured   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("articles")
+}
+
+model CalculationHistory {
+  id              String   @id @default(cuid())
+  title           String?
+  expression      String
+  variables       Json?
+  result          Float?
+  formattedResult String?
+  outputUnit      String?
+  createdAt       DateTime @default(now())
+
+  @@map("calculation_histories")
+}

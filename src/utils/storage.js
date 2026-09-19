@@ -1,10 +1,11 @@
-// Helper penyimpanan lokal (localStorage) untuk Xstronomy
+// Helper penyimpanan lokal (localStorage) & Realtime Database API untuk Xstronomy
 import { INITIAL_NEWS } from '../data/newsData';
 
 const NEWS_STORAGE_KEY = 'xstronomy_news_data';
 const HISTORY_STORAGE_KEY = 'xstronomy_calc_history';
 const ADMIN_AUTH_KEY = 'xstronomy_admin_session';
 
+// --- Local Storage Cache Synchronous Helpers ---
 export const getStoredNews = () => {
   try {
     const data = localStorage.getItem(NEWS_STORAGE_KEY);
@@ -26,34 +27,101 @@ export const saveNews = (newsList) => {
   try {
     localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(newsList));
   } catch (e) {
-    console.error('Gagal menyimpan berita:', e);
+    console.error('Gagal menyimpan berita ke cache:', e);
   }
 };
 
-export const addNewsArticle = (article) => {
+// --- Realtime Database API Operations (Prisma Postgres / Vercel Serverless) ---
+
+export const fetchNewsFromApi = async () => {
+  try {
+    const response = await fetch('/api/news');
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Gagal memuat berita`);
+    }
+    const result = await response.json();
+    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+      saveNews(result.data);
+      return result.data;
+    }
+  } catch (err) {
+    console.warn('Fallback ke cache lokal (offline/dev):', err.message);
+  }
+  return getStoredNews();
+};
+
+export const addNewsArticle = async (article) => {
+  // Optimistic update ke cache lokal
   const current = getStoredNews();
-  const newArticle = {
+  const tempArticle = {
     ...article,
     id: 'news-' + Date.now(),
     date: new Date().toISOString().split('T')[0]
   };
-  const updated = [newArticle, ...current];
-  saveNews(updated);
-  return updated;
+  const updatedLocal = [tempArticle, ...current];
+  saveNews(updatedLocal);
+
+  try {
+    const response = await fetch('/api/news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(article)
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const synced = [result.data, ...current.filter((n) => n.id !== tempArticle.id)];
+        saveNews(synced);
+        return synced;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal menyimpan ke serverless DB, disimpan di lokal:', err.message);
+  }
+
+  return updatedLocal;
 };
 
-export const updateNewsArticle = (id, updatedFields) => {
+export const updateNewsArticle = async (id, updatedFields) => {
   const current = getStoredNews();
-  const updated = current.map((item) => (item.id === id ? { ...item, ...updatedFields } : item));
-  saveNews(updated);
-  return updated;
+  const updatedLocal = current.map((item) => (item.id === id ? { ...item, ...updatedFields } : item));
+  saveNews(updatedLocal);
+
+  try {
+    const response = await fetch('/api/news', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updatedFields })
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const synced = current.map((item) => (item.id === id ? result.data : item));
+        saveNews(synced);
+        return synced;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal update ke serverless DB, update di lokal:', err.message);
+  }
+
+  return updatedLocal;
 };
 
-export const deleteNewsArticle = (id) => {
+export const deleteNewsArticle = async (id) => {
   const current = getStoredNews();
-  const updated = current.filter((item) => item.id !== id);
-  saveNews(updated);
-  return updated;
+  const updatedLocal = current.filter((item) => item.id !== id);
+  saveNews(updatedLocal);
+
+  try {
+    await fetch(`/api/news?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+  } catch (err) {
+    console.warn('Gagal hapus di serverless DB, dihapus di lokal:', err.message);
+  }
+
+  return updatedLocal;
 };
 
 export const resetNewsToDefault = () => {
@@ -79,7 +147,7 @@ export const addCalcHistory = (calcItem) => {
       id: 'calc-' + Date.now(),
       timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
     };
-    const updated = [itemWithId, ...current].slice(0, 15); // simpan maksimal 15 riwayat
+    const updated = [itemWithId, ...current].slice(0, 15);
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updated));
     return updated;
   } catch (e) {
@@ -92,7 +160,7 @@ export const clearCalcHistory = () => {
   return [];
 };
 
-// Admin Session (Simple simulated token)
+// Admin Session
 export const isAdminAuthenticated = () => {
   return localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
 };

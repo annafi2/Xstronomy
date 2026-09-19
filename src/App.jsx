@@ -24,6 +24,7 @@ import AdminPortal from './components/Admin/AdminPortal';
 // Storage helpers
 import { 
   getStoredNews, 
+  fetchNewsFromApi,
   addNewsArticle, 
   updateNewsArticle, 
   deleteNewsArticle, 
@@ -52,8 +53,16 @@ export function App() {
 
   // Inisialisasi data berita dan sesi admin
   useEffect(() => {
+    // Muat data awal dari cache lokal
     setNews(getStoredNews());
     setIsAdmin(isAdminAuthenticated());
+
+    // Fetch pembaruan data secara realtime dari Prisma Postgres DB
+    fetchNewsFromApi().then((data) => {
+      if (data && data.length > 0) {
+        setNews(data);
+      }
+    });
   }, []);
 
   // Admin Actions
@@ -67,18 +76,18 @@ export function App() {
     setIsAdmin(false);
   };
 
-  const handleSaveArticle = (articleData) => {
+  const handleSaveArticle = async (articleData) => {
     if (articleData.id) {
-      const updated = updateNewsArticle(articleData.id, articleData);
+      const updated = await updateNewsArticle(articleData.id, articleData);
       setNews(updated);
     } else {
-      const updated = addNewsArticle(articleData);
+      const updated = await addNewsArticle(articleData);
       setNews(updated);
     }
   };
 
-  const handleDeleteArticle = (id) => {
-    const updated = deleteNewsArticle(id);
+  const handleDeleteArticle = async (id) => {
+    const updated = await deleteNewsArticle(id);
     setNews(updated);
   };
 
