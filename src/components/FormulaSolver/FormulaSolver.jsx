@@ -29,6 +29,7 @@ import LatexRenderer from '../Common/LatexRenderer';
 import ConstantsModal from './ConstantsModal';
 import GraphPlotter from './GraphPlotter';
 import CalculationHistory from './CalculationHistory';
+import EquationBuilder from './EquationBuilder';
 
 export const FormulaSolver = ({ targetPresetId }) => {
   // Preset terpilih
@@ -301,6 +302,9 @@ export const FormulaSolver = ({ targetPresetId }) => {
                 )}
               </div>
             </div>
+
+            {/* Equation Builder Ribbon: Struktur Pecahan, Akar, Pangkat ala MS Word */}
+            <EquationBuilder onInsertStructure={handleInsertToken} />
 
             {/* Expression Input Field with Math Styling */}
             <div className="expression-input-box">
