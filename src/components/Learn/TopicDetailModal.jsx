@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   BookOpen, 
@@ -42,7 +43,7 @@ export const TopicDetailModal = ({ topic, gradeTitle, onClose, onOpenInSolver })
     setShowResult(false);
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container topic-modal-container" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close-btn" onClick={onClose} aria-label="Tutup materi">
@@ -188,7 +189,8 @@ export const TopicDetailModal = ({ topic, gradeTitle, onClose, onOpenInSolver })
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

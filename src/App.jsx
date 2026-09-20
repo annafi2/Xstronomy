@@ -80,19 +80,19 @@ export function App() {
 
     // Fetch pembaruan data secara realtime dari Prisma Postgres DB
     fetchNewsFromApi().then((data) => {
-      if (data && data.length > 0) {
+      if (Array.isArray(data)) {
         setNews(data);
       }
     });
 
     fetchQuizFromApi().then((data) => {
-      if (data && data.length > 0) {
+      if (Array.isArray(data)) {
         setQuizList(data);
       }
     });
 
     fetchCustomFormulasFromApi().then((data) => {
-      if (data && data.length > 0) {
+      if (Array.isArray(data)) {
         setCustomFormulas(data);
       }
     });
@@ -193,6 +193,7 @@ export function App() {
           <NewsFeed
             news={news}
             onSelectArticle={(article) => setSelectedArticle(article)}
+            onOpenAdmin={() => setActiveTab('admin')}
           />
         )}
 

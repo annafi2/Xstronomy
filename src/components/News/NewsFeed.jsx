@@ -10,15 +10,16 @@ import {
 import { NEWS_CATEGORIES } from '../../data/newsData';
 
 export const NewsFeed = ({
-  news,
-  onSelectArticle
+  news = [],
+  onSelectArticle,
+  onOpenAdmin
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter artikel berdasarkan pencarian dan kategori
   const filteredNews = useMemo(() => {
-    return news.filter((item) => {
+    return (news || []).filter((item) => {
       const matchCategory =
         selectedCategory === 'Semua Kategori' || item.category === selectedCategory;
       const query = searchQuery.toLowerCase().trim();
@@ -34,7 +35,7 @@ export const NewsFeed = ({
 
   // Featured article (paling atas atau ditandai featured)
   const featuredArticle = useMemo(() => {
-    return news.find((n) => n.featured) || news[0];
+    return (news || []).find((n) => n.featured) || (news || [])[0];
   }, [news]);
 
   const regularArticles = useMemo(() => {
@@ -59,117 +60,135 @@ export const NewsFeed = ({
         </div>
       </div>
 
-      {/* Featured Big Article (if on all categories and no search) */}
-      {selectedCategory === 'Semua Kategori' && !searchQuery && featuredArticle && (
-        <div className="featured-hero-card glass-card" onClick={() => onSelectArticle(featuredArticle)}>
-          <div className="featured-image-wrapper">
-            <img 
-              src={featuredArticle.coverImage || 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1200&q=80'} 
-              alt={featuredArticle.title}
-              className="featured-cover-img"
-            />
-            <div className="featured-overlay-gradient"></div>
-            <div className="featured-badge-pos">
-              <span className="badge badge-gold">Artikel Pilihan Utama</span>
-              <span className="badge badge-cyan">{featuredArticle.category}</span>
-            </div>
-          </div>
-          <div className="featured-info">
-            <div className="card-meta">
-              <span><Calendar size={14} /> {featuredArticle.date}</span>
-              <span><Clock size={14} /> {featuredArticle.readTime || '4 mnt'}</span>
-            </div>
-            <h2 className="featured-title">{featuredArticle.title}</h2>
-            <p className="featured-summary">{featuredArticle.summary}</p>
-            <div className="featured-footer">
-              <div className="featured-tags">
-                {featuredArticle.tags?.slice(0, 3).map((t, idx) => (
-                  <span key={idx} className="tag-pill">#{t}</span>
-                ))}
-              </div>
-              <button className="btn btn-primary btn-sm read-btn">
-                <span>Baca Selengkapnya</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search and Filter Controls */}
-      <div className="feed-controls-bar">
-        <div className="search-input-wrapper">
-          <Search size={18} className="search-icon" />
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Cari berita bintang, JWST, lubang hitam, eksoplanet..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button className="clear-search-btn" onClick={() => setSearchQuery('')}>✕</button>
+      {(!news || news.length === 0) ? (
+        <div className="empty-state glass-card empty-news-db-card">
+          <Sparkles size={48} className="empty-icon text-cyan" />
+          <h3>Belum Ada Artikel di Database</h3>
+          <p>
+            Database artikel saat ini kosong. Anda dapat menambahkan dan mempublikasikan artikel berita astronomi langsung melalui Portal Admin.
+          </p>
+          {onOpenAdmin && (
+            <button className="btn btn-primary" onClick={onOpenAdmin}>
+              <span>Buka Portal Admin</span>
+              <ArrowRight size={16} />
+            </button>
           )}
         </div>
-
-        <div className="category-scroll-container">
-          {NEWS_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              className={`category-pill-btn ${selectedCategory === cat ? 'category-pill-active' : ''}`}
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Articles Grid */}
-      <div className="articles-grid">
-        {filteredNews.length === 0 ? (
-          <div className="empty-state glass-card">
-            <Sparkles size={40} className="empty-icon" />
-            <h3>Tidak Ada Artikel yang Cocok</h3>
-            <p>Cobalah mengganti kata kunci pencarian atau memilih kategori lain.</p>
-          </div>
-        ) : (
-          (selectedCategory === 'Semua Kategori' && !searchQuery ? regularArticles : filteredNews).map((article) => (
-            <article 
-              key={article.id} 
-              className="article-card glass-card"
-              onClick={() => onSelectArticle(article)}
-            >
-              <div className="article-card-image-box">
+      ) : (
+        <>
+          {/* Featured Big Article (if on all categories and no search) */}
+          {selectedCategory === 'Semua Kategori' && !searchQuery && featuredArticle && (
+            <div className="featured-hero-card glass-card" onClick={() => onSelectArticle(featuredArticle)}>
+              <div className="featured-image-wrapper">
                 <img 
-                  src={article.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80'} 
-                  alt={article.title}
-                  className="article-card-img"
-                  loading="lazy"
+                  src={featuredArticle.coverImage || 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1200&q=80'} 
+                  alt={featuredArticle.title} 
+                  className="featured-cover-img"
                 />
-                <span className="card-category-badge">{article.category}</span>
+                <div className="featured-overlay-gradient"></div>
+                <div className="featured-badge-pos">
+                  <span className="badge badge-gold">Artikel Pilihan Utama</span>
+                  <span className="badge badge-cyan">{featuredArticle.category}</span>
+                </div>
               </div>
-
-              <div className="article-card-content">
+              <div className="featured-info">
                 <div className="card-meta">
-                  <span><Calendar size={13} /> {article.date}</span>
-                  <span><Clock size={13} /> {article.readTime || '4 mnt'}</span>
+                  <span><Calendar size={14} /> {featuredArticle.date}</span>
+                  <span><Clock size={14} /> {featuredArticle.readTime || '4 mnt'}</span>
                 </div>
-
-                <h3 className="article-card-title">{article.title}</h3>
-                <p className="article-card-desc">{article.summary}</p>
-
-                <div className="article-card-footer">
-                  <span className="author-text">{article.author || 'Admin Xstronomy'}</span>
-                  <span className="read-more-link">
-                    Baca <ArrowRight size={14} />
-                  </span>
+                <h2 className="featured-title">{featuredArticle.title}</h2>
+                <p className="featured-summary">{featuredArticle.summary}</p>
+                <div className="featured-footer">
+                  <div className="featured-tags">
+                    {featuredArticle.tags?.slice(0, 3).map((t, idx) => (
+                      <span key={idx} className="tag-pill">#{t}</span>
+                    ))}
+                  </div>
+                  <button className="btn btn-primary btn-sm read-btn">
+                    <span>Baca Selengkapnya</span>
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               </div>
-            </article>
-          ))
-        )}
-      </div>
+            </div>
+          )}
+
+          {/* Search and Filter Controls */}
+          <div className="feed-controls-bar">
+            <div className="search-input-wrapper">
+              <Search size={18} className="search-icon" />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Cari berita bintang, JWST, lubang hitam, eksoplanet..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button className="clear-search-btn" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+            </div>
+
+            <div className="category-scroll-container">
+              {NEWS_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  className={`category-pill-btn ${selectedCategory === cat ? 'category-pill-active' : ''}`}
+                  onClick={() => setSelectedCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Articles Grid */}
+          <div className="articles-grid">
+            {filteredNews.length === 0 ? (
+              <div className="empty-state glass-card">
+                <Sparkles size={40} className="empty-icon" />
+                <h3>Tidak Ada Artikel yang Cocok</h3>
+                <p>Cobalah mengganti kata kunci pencarian atau memilih kategori lain.</p>
+              </div>
+            ) : (
+              (selectedCategory === 'Semua Kategori' && !searchQuery ? regularArticles : filteredNews).map((article) => (
+                <article 
+                  key={article.id} 
+                  className="article-card glass-card"
+                  onClick={() => onSelectArticle(article)}
+                >
+                  <div className="article-card-image-box">
+                    <img 
+                      src={article.coverImage || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80'} 
+                      alt={article.title} 
+                      className="article-card-img" 
+                      loading="lazy" 
+                    />
+                    <span className="card-category-badge">{article.category}</span>
+                  </div>
+
+                  <div className="article-card-content">
+                    <div className="card-meta">
+                      <span><Calendar size={13} /> {article.date}</span>
+                      <span><Clock size={13} /> {article.readTime || '4 mnt'}</span>
+                    </div>
+
+                    <h3 className="article-card-title">{article.title}</h3>
+                    <p className="article-card-desc">{article.summary}</p>
+
+                    <div className="article-card-footer">
+                      <span className="author-text">{article.author || 'Admin Xstronomy'}</span>
+                      <span className="read-more-link">
+                        Baca <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

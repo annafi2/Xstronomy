@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   GraduationCap, 
   Sparkles, 
@@ -470,7 +471,7 @@ export const QuizView = ({
       ) : null}
 
       {/* Quiz Celebration Modal */}
-      {showCelebration && (
+      {showCelebration && createPortal(
         <div className="modal-overlay" onClick={() => setShowCelebration(false)}>
           <div className="modal-container celebration-modal glass-card" onClick={(e) => e.stopPropagation()}>
             <div className="celebration-badge-glow">
@@ -522,7 +523,8 @@ export const QuizView = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

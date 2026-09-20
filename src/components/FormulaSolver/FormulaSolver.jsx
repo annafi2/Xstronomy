@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Calculator, 
   Sparkles, 
@@ -839,7 +840,7 @@ export const FormulaSolver = ({
       )}
 
       {/* Save Custom Formula Modal */}
-      {showSaveCustomModal && (
+      {showSaveCustomModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowSaveCustomModal(false)}>
           <div className="modal-container glass-card save-custom-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-bar">
@@ -891,7 +892,8 @@ export const FormulaSolver = ({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

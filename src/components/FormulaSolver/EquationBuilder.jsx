@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Sparkles, 
   HelpCircle, 
@@ -250,7 +251,7 @@ export const EquationBuilder = ({ onInsertStructure, onSetFormula }) => {
       </div>
 
       {/* Modal Dialog Perancang Struktur Interaktif */}
-      {showVisualModal && (
+      {showVisualModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowVisualModal(false)}>
           <div className="modal-container eq-builder-modal glass-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-bar">
@@ -375,7 +376,8 @@ export const EquationBuilder = ({ onInsertStructure, onSetFormula }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

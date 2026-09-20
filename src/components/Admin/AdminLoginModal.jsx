@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ShieldCheck, Lock, Sparkles, Key } from 'lucide-react';
 
 export const AdminLoginModal = ({ onClose, onLoginSuccess }) => {
@@ -16,7 +17,7 @@ export const AdminLoginModal = ({ onClose, onLoginSuccess }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container login-modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header-bar">
@@ -72,7 +73,8 @@ export const AdminLoginModal = ({ onClose, onLoginSuccess }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

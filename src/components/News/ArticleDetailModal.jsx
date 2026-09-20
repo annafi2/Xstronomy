@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, User, Tag, Share2, Sparkles, BookOpen } from 'lucide-react';
 
 export const ArticleDetailModal = ({ article, onClose, onExplorePhysics }) => {
@@ -17,7 +18,7 @@ export const ArticleDetailModal = ({ article, onClose, onExplorePhysics }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container article-modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
@@ -109,7 +110,8 @@ export const ArticleDetailModal = ({ article, onClose, onExplorePhysics }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

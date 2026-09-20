@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Sparkles, 
   X, 
@@ -9,7 +10,8 @@ import {
   Eye, 
   Save, 
   SlidersHorizontal,
-  GraduationCap
+  GraduationCap,
+  ChevronDown
 } from 'lucide-react';
 import LatexRenderer from '../Common/LatexRenderer';
 import EquationBuilder from '../FormulaSolver/EquationBuilder';
@@ -37,6 +39,7 @@ export const QuizManagerModal = ({
 
   // Menyimpan referensi field yang sedang aktif untuk disisipkan formula dari ribbon
   const [focusedField, setFocusedField] = useState('question'); // 'question' | 'explanation' | 'hint' | option index (0..4)
+  const [showRibbon, setShowRibbon] = useState(false);
   const questionInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -127,7 +130,7 @@ export const QuizManagerModal = ({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container quiz-editor-modal glass-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header-bar">
@@ -182,14 +185,27 @@ export const QuizManagerModal = ({
             </div>
           </div>
 
-          {/* Equation Builder Ribbon for Admin */}
-          <div className="admin-ribbon-embed-box">
-            <div className="ribbon-embed-label">
-              <Sparkles size={14} className="accent-icon-gold" />
-              <span>Sisipkan Formula, Pecahan, Akar, atau Konstanta Fisika ke Field Aktif:</span>
-            </div>
-            <EquationBuilder onInsertStructure={handleInsertStructure} />
+          {/* Collapsible Equation Builder Ribbon for Admin */}
+          <div className="ribbon-toggle-bar">
+            <button
+              type="button"
+              className={`ribbon-toggle-btn ${showRibbon ? 'active' : ''}`}
+              onClick={() => setShowRibbon(!showRibbon)}
+            >
+              <Sparkles size={13} className="accent-icon-gold" />
+              <span>{showRibbon ? 'Sembunyikan Pita Rumus Visual' : 'Buka Pita Rumus (Equation Builder Ribbon)'}</span>
+              <ChevronDown size={13} className={`chevron-indicator ${showRibbon ? 'rotate-180' : ''}`} />
+            </button>
+            <span className="ribbon-target-info">
+              Target: <strong>{typeof focusedField === 'number' ? `Opsi ${String.fromCharCode(65 + focusedField)}` : focusedField === 'question' ? 'Pertanyaan' : focusedField === 'hint' ? 'Petunjuk' : 'Pembahasan'}</strong>
+            </span>
           </div>
+
+          {showRibbon && (
+            <div className="admin-ribbon-embed-box animate-fade-in">
+              <EquationBuilder onInsertStructure={handleInsertStructure} />
+            </div>
+          )}
 
           {/* Question Text */}
           <div className="input-group">
@@ -351,7 +367,8 @@ export const QuizManagerModal = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

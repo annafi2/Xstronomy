@@ -11,21 +11,19 @@ export const getStoredNews = () => {
     const data = localStorage.getItem(NEWS_STORAGE_KEY);
     if (data) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (e) {
     console.error('Gagal membaca berita dari storage:', e);
   }
-  // Default seed
-  localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(INITIAL_NEWS));
-  return INITIAL_NEWS;
+  return [];
 };
 
 export const saveNews = (newsList) => {
   try {
-    localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(newsList));
+    localStorage.setItem(NEWS_STORAGE_KEY, JSON.stringify(newsList || []));
   } catch (e) {
     console.error('Gagal menyimpan berita ke cache:', e);
   }
@@ -40,7 +38,7 @@ export const fetchNewsFromApi = async () => {
       throw new Error(`HTTP ${response.status}: Gagal memuat berita`);
     }
     const result = await response.json();
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+    if (result.success && Array.isArray(result.data)) {
       saveNews(result.data);
       return result.data;
     }
@@ -125,8 +123,8 @@ export const deleteNewsArticle = async (id) => {
 };
 
 export const resetNewsToDefault = () => {
-  saveNews(INITIAL_NEWS);
-  return INITIAL_NEWS;
+  saveNews([]);
+  return [];
 };
 
 // Calculation History

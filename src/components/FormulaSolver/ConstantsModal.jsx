@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Search, Plus, Sparkles } from 'lucide-react';
 import { CONSTANTS } from '../../data/constantsData';
 import LatexRenderer from '../Common/LatexRenderer';
@@ -22,7 +23,7 @@ export const ConstantsModal = ({ onClose, onInsertConstant }) => {
     });
   }, [searchQuery, selectedCategory]);
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container constants-modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header-bar">
@@ -98,7 +99,8 @@ export const ConstantsModal = ({ onClose, onInsertConstant }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
