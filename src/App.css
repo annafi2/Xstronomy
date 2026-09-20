@@ -3614,7 +3614,14 @@
   left: 0;
   right: 0;
   z-index: 90;
-  padding: 0 16px;
+  padding: 0 14px;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.mobile-floating-dock.dock-hidden {
+  transform: translateY(130%);
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -3622,16 +3629,16 @@
   max-width: 440px;
   margin: 0 auto;
   pointer-events: auto;
-  background: rgba(8, 12, 32, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(6, 10, 26, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.38);
   border-radius: var(--radius-full);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(56, 189, 248, 0.18);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.16);
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 6px 10px;
+  padding: 5px 8px;
 }
 
 .dock-btn {
@@ -3643,9 +3650,9 @@
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 16px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 5px 8px;
+  border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
@@ -3672,11 +3679,61 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%);
   border-radius: 50%;
   z-index: -1;
+}
+
+.dock-minimize-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dock-minimize-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.dock-mini-fab {
+  pointer-events: auto;
+  margin-left: auto;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(6, 10, 26, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 9999px;
+  color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(56, 189, 248, 0.25);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.dock-mini-fab:hover {
+  transform: scale(1.05);
+}
+
+/* Sembunyikan floating dock jika modal sedang terbuka */
+body:has(.modal-overlay) .mobile-floating-dock {
+  display: none !important;
 }
 
 /* ========================================================
@@ -3690,10 +3747,16 @@
     display: block;
   }
   .main-content-container {
-    padding-bottom: 110px; /* Ruang bernapas untuk bottom floating dock */
+    padding-bottom: 150px !important; /* Ruang bernapas ekstra untuk bottom floating dock */
+  }
+  .solver-grid {
+    padding-bottom: 40px;
+  }
+  .formula-editor-card {
+    margin-bottom: 20px;
   }
   .footer-wrapper {
-    padding-bottom: 70px;
+    padding-bottom: 80px;
   }
   .equation-ribbon-bar {
     overflow-x: auto;

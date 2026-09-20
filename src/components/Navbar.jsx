@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   Compass,
-  GraduationCap
+  GraduationCap,
+  ChevronDown
 } from 'lucide-react';
 
 export const Navbar = ({ 
@@ -20,6 +21,8 @@ export const Navbar = ({
   onLogoutAdmin
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dockVisible, setDockVisible] = useState(true);
+  const [dockMinimized, setDockMinimized] = useState(false);
 
   const navItems = [
     { id: 'news', label: 'Berita Kosmis', shortLabel: 'Berita', icon: Telescope },
@@ -40,6 +43,50 @@ export const Navbar = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileMenuOpen]);
+
+  // Auto-hide floating dock saat user scroll ke bawah atau sedang mengetik di input
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          // Tampilkan kembali jika scroll ke atas atau di puncak halaman
+          if (currentScrollY < 40 || currentScrollY < lastScrollY - 10) {
+            setDockVisible(true);
+          } else if (currentScrollY > lastScrollY + 10 && currentScrollY > 70) {
+            // Sembunyikan jika scroll ke bawah menjauh agar tidak menutupi kartu/rumus
+            setDockVisible(false);
+          }
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    const handleFocusIn = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) {
+        setDockVisible(false);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setDockVisible(true);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   const handleNavClick = (id) => {
     setActiveTab(id);
@@ -180,27 +227,47 @@ export const Navbar = ({
       </header>
 
       {/* Floating Cosmic Dock for Small DPI / Mobile Phones */}
-      <nav className="mobile-floating-dock">
-        <div className="dock-glass-container">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                className={`dock-btn ${isActive ? 'dock-btn-active' : ''}`}
-                onClick={() => handleNavClick(item.id)}
-                title={item.label}
-              >
-                <div className="dock-icon-wrapper">
-                  <Icon size={20} />
-                  {isActive && <span className="dock-active-glow" />}
-                </div>
-                <span className="dock-label">{item.shortLabel}</span>
-              </button>
-            );
-          })}
-        </div>
+      <nav className={`mobile-floating-dock ${!dockVisible ? 'dock-hidden' : ''} ${dockMinimized ? 'dock-minimized' : ''}`}>
+        {dockMinimized ? (
+          <button 
+            className="dock-mini-fab"
+            onClick={() => setDockMinimized(false)}
+            title="Buka Navigasi Cepat"
+            aria-label="Buka Navigasi Cepat"
+          >
+            <Compass size={18} className="accent-icon-cyan" />
+            <span className="dock-mini-label">Menu</span>
+          </button>
+        ) : (
+          <div className="dock-glass-container">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  className={`dock-btn ${isActive ? 'dock-btn-active' : ''}`}
+                  onClick={() => handleNavClick(item.id)}
+                  title={item.label}
+                >
+                  <div className="dock-icon-wrapper">
+                    <Icon size={19} />
+                    {isActive && <span className="dock-active-glow" />}
+                  </div>
+                  <span className="dock-label">{item.shortLabel}</span>
+                </button>
+              );
+            })}
+            <button 
+              className="dock-minimize-btn" 
+              onClick={() => setDockMinimized(true)}
+              title="Sembunyikan dock navigasi"
+              aria-label="Sembunyikan dock navigasi"
+            >
+              <ChevronDown size={14} />
+            </button>
+          </div>
+        )}
       </nav>
     </>
   );
