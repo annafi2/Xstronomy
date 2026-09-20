@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ShieldCheck, 
   PlusCircle, 
@@ -21,10 +21,16 @@ import {
   GraduationCap,
   HelpCircle,
   Award,
-  BookOpen
+  BookOpen,
+  Camera,
+  Scan,
+  UserCheck
 } from 'lucide-react';
 import { NEWS_CATEGORIES } from '../../data/newsData';
 import QuizManagerModal from './QuizManagerModal';
+import FaceAuthScanner from './FaceAuthScanner';
+import FaceRegisterModal from './FaceRegisterModal';
+import { getStoredBiometrics, deleteBiometrics } from '../../utils/faceBiometrics';
 import LatexRenderer from '../Common/LatexRenderer';
 
 const PRESET_COVERS = [
@@ -52,6 +58,20 @@ export const AdminPortal = ({
   // Login Gate State
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // AI Face Biometrics State
+  const [biometrics, setBiometrics] = useState(() => getStoredBiometrics());
+  const [authMethod, setAuthMethod] = useState(() => (getStoredBiometrics() ? 'face' : 'password'));
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  const handleDeleteBiometrics = () => {
+    if (window.confirm('Hapus data biometrik wajah Anda dari sistem Xstronomy?')) {
+      deleteBiometrics();
+      setBiometrics(null);
+      setAuthMethod('password');
+      alert('Data biometrik wajah administrator berhasil dihapus.');
+    }
+  };
 
   // Admin Section Switcher: 'articles' | 'quiz'
   const [adminSection, setAdminSection] = useState('articles');
@@ -225,41 +245,139 @@ export const AdminPortal = ({
             </p>
           </div>
 
-          <form onSubmit={handleLoginSubmit} className="gate-form">
-            <div className="form-group">
-              <label className="form-label">
-                <Key size={15} /> Kata Sandi Akses Portal:
-              </label>
-              <input
-                type="password"
-                className="input-field gate-input"
-                placeholder="Masukkan kata sandi..."
-                value={passcode}
-                onChange={(e) => {
-                  setPasscode(e.target.value);
-                  setLoginError('');
-                }}
-                autoFocus
-                required
-              />
-              <span className="gate-hint">
-                Kunci Demo Administrator: <code>admin123</code>
-              </span>
-            </div>
-
-            {loginError && (
-              <div className="login-error-alert">
-                <ShieldAlert size={16} />
-                <span>{loginError}</span>
-              </div>
-            )}
-
-            <button type="submit" className="btn btn-primary gate-submit-btn">
-              <Lock size={16} />
-              <span>Masuk ke Portal Admin</span>
+          {/* Biometric / Password Method Switcher */}
+          <div className="gate-auth-tabs">
+            <button
+              type="button"
+              className={`gate-tab-btn ${authMethod === 'face' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMethod('face');
+                setLoginError('');
+              }}
+            >
+              <Scan size={16} />
+              <span>Pindai Wajah AI</span>
+              {biometrics?.registered && <span className="auth-registered-dot" title="Biometrik Wajah Terdaftar" />}
             </button>
-          </form>
+            <button
+              type="button"
+              className={`gate-tab-btn ${authMethod === 'password' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMethod('password');
+                setLoginError('');
+              }}
+            >
+              <Key size={16} />
+              <span>Kata Sandi Manual</span>
+            </button>
+          </div>
+
+          {/* METHOD 1: FACE RECOGNITION AI */}
+          {authMethod === 'face' && (
+            <div className="gate-face-section">
+              {biometrics?.registered ? (
+                <FaceAuthScanner
+                  storedBiometrics={biometrics}
+                  onVerified={() => {
+                    onLogin();
+                  }}
+                  onSwitchToPassword={() => setAuthMethod('password')}
+                  onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
+                />
+              ) : (
+                <div className="face-unregistered-box">
+                  <div className="unregistered-icon-circle">
+                    <Scan size={38} className="text-cyan" />
+                  </div>
+                  <h3>Belum Ada Wajah Terdaftar</h3>
+                  <p>
+                    Daftarkan wajah Anda terlebih dahulu menggunakan otorisasi kata sandi admin untuk mengaktifkan login instan dengan sensor AI.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary full-width"
+                    onClick={() => setIsRegisterModalOpen(true)}
+                  >
+                    <Camera size={16} />
+                    <span>Daftarkan Wajah Administrator</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm full-width"
+                    onClick={() => setAuthMethod('password')}
+                  >
+                    <Key size={15} />
+                    <span>Masuk dengan Kata Sandi Manual</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* METHOD 2: MANUAL PASSWORD */}
+          {authMethod === 'password' && (
+            <form onSubmit={handleLoginSubmit} className="gate-form">
+              <div className="form-group">
+                <label className="form-label">
+                  <Key size={15} /> Kata Sandi Akses Portal:
+                </label>
+                <input
+                  type="password"
+                  className="input-field gate-input"
+                  placeholder="Masukkan kata sandi..."
+                  value={passcode}
+                  onChange={(e) => {
+                    setPasscode(e.target.value);
+                    setLoginError('');
+                  }}
+                  autoFocus
+                  required
+                />
+                <span className="gate-hint">
+                  Kunci Demo Administrator: <code>admin123</code>
+                </span>
+              </div>
+
+              {loginError && (
+                <div className="login-error-alert">
+                  <ShieldAlert size={16} />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <button type="submit" className="btn btn-primary gate-submit-btn">
+                <Lock size={16} />
+                <span>Masuk ke Portal Admin</span>
+              </button>
+
+              <div className="gate-alternative-action">
+                <button
+                  type="button"
+                  className="btn-text-link"
+                  onClick={() => setIsRegisterModalOpen(true)}
+                >
+                  <Camera size={15} />
+                  <span>
+                    {biometrics?.registered ? 'Atur Ulang / Pindai Wajah Baru' : 'Daftarkan Wajah untuk Login Face AI'}
+                  </span>
+                </button>
+              </div>
+            </form>
+          )}
         </div>
+
+        {/* Modal Pendaftaran Wajah */}
+        {isRegisterModalOpen && (
+          <FaceRegisterModal
+            isOpen={isRegisterModalOpen}
+            onClose={() => setIsRegisterModalOpen(false)}
+            onRegisteredSuccess={() => {
+              const updated = getStoredBiometrics();
+              setBiometrics(updated);
+              setAuthMethod('face');
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -278,6 +396,33 @@ export const AdminPortal = ({
         </div>
 
         <div className="portal-actions-right">
+          {biometrics?.registered ? (
+            <div className="biometric-badge-group">
+              <div className="biometric-active-pill" title={`Wajah Terdaftar: ${new Date(biometrics.registeredAt).toLocaleDateString('id-ID')}`}>
+                <UserCheck size={14} color="#10b981" />
+                <span>Face AI Aktif</span>
+              </div>
+              <button
+                type="button"
+                className="btn-icon-subtle"
+                onClick={handleDeleteBiometrics}
+                title="Hapus / Reset Biometrik Wajah"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm biometric-enroll-btn"
+              onClick={() => setIsRegisterModalOpen(true)}
+              title="Daftarkan Wajah untuk Autentikasi Cepat"
+            >
+              <Camera size={14} />
+              <span>Aktifkan Face AI</span>
+            </button>
+          )}
+
           <button 
             className="btn btn-secondary btn-sm"
             onClick={() => {
@@ -845,6 +990,17 @@ export const AdminPortal = ({
             onSaveQuizQuestion(questionData);
             setIsQuizModalOpen(false);
             setEditingQuestion(null);
+          }}
+        />
+      )}
+
+      {/* Face Biometrics Registration Modal */}
+      {isRegisterModalOpen && (
+        <FaceRegisterModal
+          isOpen={isRegisterModalOpen}
+          onClose={() => setIsRegisterModalOpen(false)}
+          onRegisteredSuccess={() => {
+            setBiometrics(getStoredBiometrics());
           }}
         />
       )}

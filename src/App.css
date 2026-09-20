@@ -5769,4 +5769,572 @@ body:has(.modal-overlay) .mobile-floating-dock {
   }
 }
 
+/* ========================================================
+   AI FACE RECOGNITION BIOMETRICS & COSMIC SCANNER
+   ======================================================== */
+
+.gate-auth-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.gate-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.gate-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gate-tab-btn.active {
+  background: rgba(56, 189, 248, 0.16);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+}
+
+.auth-registered-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  display: inline-block;
+}
+
+/* Unregistered Biometrics Prompt Box */
+.face-unregistered-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  padding: 24px 18px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px dashed rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  margin-top: 6px;
+}
+
+.unregistered-icon-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.15);
+}
+
+.face-unregistered-box h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #fff;
+}
+
+.face-unregistered-box p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* Cosmic Scanner Container */
+.face-scanner-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+}
+
+.cosmic-scanner-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #040714;
+  border: 2px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.cosmic-scanner-viewport.scan-matching-glow {
+  border-color: #38bdf8;
+  box-shadow: 0 0 36px rgba(56, 189, 248, 0.35);
+}
+
+.cosmic-scanner-viewport.scan-success-glow {
+  border-color: #10b981;
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+}
+
+.scanner-video-feed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mirror-video {
+  transform: scaleX(-1);
+}
+
+/* Scanner HUD Overlay */
+.scanner-hud-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hud-scan-circle {
+  position: relative;
+  width: 76%;
+  height: 76%;
+  border-radius: 50%;
+  border: 2px dashed rgba(56, 189, 248, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.1);
+  transition: all 0.3s ease;
+}
+
+.hud-scan-circle.circle-matching {
+  border-color: #38bdf8;
+  border-style: solid;
+  box-shadow: inset 0 0 24px rgba(56, 189, 248, 0.25), 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+.hud-scan-circle.circle-success {
+  border-color: #10b981;
+  border-style: solid;
+  box-shadow: inset 0 0 30px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.4);
+}
+
+.hud-scan-circle.circle-registering {
+  border-color: #facc15;
+}
+
+/* Radar Sweep Animation */
+.hud-radar-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(56, 189, 248, 0.25) 60deg, transparent 60.1deg);
+  animation: radarSweep 2.2s linear infinite;
+}
+
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Target Corner Brackets */
+.target-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: #38bdf8;
+  border-style: solid;
+}
+
+.corner-top-left {
+  top: 10px;
+  left: 10px;
+  border-width: 2px 0 0 2px;
+}
+
+.corner-top-right {
+  top: 10px;
+  right: 10px;
+  border-width: 2px 2px 0 0;
+}
+
+.corner-bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-width: 0 0 2px 2px;
+}
+
+.corner-bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-width: 0 2px 2px 0;
+}
+
+.hud-success-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.8));
+}
+
+.btn-camera-flip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(8, 13, 27, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.btn-camera-flip:hover {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+
+.scanner-error-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 12, 28, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  gap: 10px;
+}
+
+.scanner-error-text {
+  font-size: 0.82rem;
+  color: #fca5a5;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Feedback & Confidence Meter */
+.scanner-feedback-bar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.status-indicator-dot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+}
+
+.pulsing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-scanning {
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: pulseDot 1.4s infinite;
+}
+
+.dot-matching {
+  background: #facc15;
+  box-shadow: 0 0 10px #facc15;
+  animation: pulseDot 0.8s infinite;
+}
+
+.dot-success {
+  background: #10b981;
+  box-shadow: 0 0 12px #10b981;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.confidence-tag {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.accuracy-meter-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.accuracy-meter-fill {
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 9999px;
+  transition: width 0.15s ease-out, background-color 0.2s ease;
+}
+
+.accuracy-meter-fill.fill-matching {
+  background: linear-gradient(90deg, #38bdf8, #facc15);
+}
+
+.accuracy-meter-fill.fill-success {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.scanner-footer-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* Face Registration Modal Styles */
+.face-register-modal {
+  max-width: 480px !important;
+  max-height: 82vh !important;
+  padding: 20px 24px !important;
+}
+
+.face-register-step-form,
+.face-capture-step-body,
+.face-register-success-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.register-intro-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+}
+
+.intro-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.intro-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.register-viewport {
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+.register-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-labels-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.guide-status-text {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.progress-number-tag {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #facc15;
+}
+
+.progress-track-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #facc15);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* Success View in Registration */
+.face-register-success-body {
+  align-items: center;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.success-thumb-wrapper {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, #10b981, #38bdf8);
+  margin-bottom: 6px;
+}
+
+.registered-face-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.thumb-placeholder-box {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0b1127;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-check-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #060917;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.success-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.55;
+  max-width: 380px;
+}
+
+/* Header Biometric Pill in Logged-in Dashboard */
+.biometric-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 9999px;
+  padding: 3px 8px 3px 12px;
+}
+
+.biometric-active-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.btn-icon-subtle {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-subtle:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.btn-text-link {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  transition: color 0.2s ease;
+}
+
+.btn-text-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
 
