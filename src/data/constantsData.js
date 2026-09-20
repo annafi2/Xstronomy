@@ -159,6 +159,86 @@ export const CONSTANTS = [
     latex: 'g = 9.81 \\text{ m/s}^2',
     category: 'Fisika Dasar',
     description: 'Percepatan jatuh bebas rata-rata di permukaan laut bumi.'
+  },
+  {
+    key: 'K_coulomb',
+    name: 'Tetapan Gaya Coulomb',
+    symbol: 'K',
+    value: 8.9875517923e9,
+    unit: 'N·m²/C²',
+    latex: 'K = 9 \\times 10^{9} \\text{ N}\\cdot\\text{m}^2/\\text{C}^2',
+    category: 'Elektrostatika',
+    description: 'Konstanta proporsionalitas gaya elektrostatik antar muatan listrik.'
+  },
+  {
+    key: 'mu0',
+    name: 'Permeabilitas Magnetik Ruang Hampa',
+    symbol: 'μ₀',
+    value: 1.2566370614e-6, // 4 * pi * 1e-7
+    unit: 'Wb/(A·m) atau T·m/A',
+    latex: '\\mu_0 = 4\\pi \\times 10^{-7} \\text{ Wb}/(\\text{A}\\cdot\\text{m})',
+    category: 'Elektromagnetik',
+    description: 'Kemampuan ruang hampa merambatkan garis-garis gaya medan magnet.'
+  },
+  {
+    key: 'eps0',
+    name: 'Permitivitas Listrik Ruang Hampa',
+    symbol: 'ε₀',
+    value: 8.8541878128e-12,
+    unit: 'F/m',
+    latex: '\\varepsilon_0 = 8.854 \\times 10^{-12} \\text{ F/m}',
+    category: 'Elektrostatika',
+    description: 'Konstanta dielektrik ruang hampa dalam medan listrik.'
+  },
+  {
+    key: 'e_charge',
+    name: 'Muatan Elementer Elektron',
+    symbol: 'e',
+    value: 1.602176634e-19,
+    unit: 'C',
+    latex: 'e = 1.602 \\times 10^{-19} \\text{ C}',
+    category: 'Fisika Atom',
+    description: 'Muatan listrik dasar yang dibawa oleh satu elektron tunggal atau proton.'
+  },
+  {
+    key: 'm_e',
+    name: 'Massa Diam Elektron',
+    symbol: 'm_e',
+    value: 9.1093837e-31,
+    unit: 'kg',
+    latex: 'm_e = 9.11 \\times 10^{-31} \\text{ kg}',
+    category: 'Fisika Kuantum/Atom',
+    description: 'Massa inersial partikel elektron.'
+  },
+  {
+    key: 'm_p',
+    name: 'Massa Diam Proton',
+    symbol: 'm_p',
+    value: 1.6726219e-27,
+    unit: 'kg',
+    latex: 'm_p = 1.673 \\times 10^{-27} \\text{ kg} \\approx 1.0078 \\text{ sma}',
+    category: 'Fisika Inti',
+    description: 'Massa partikel proton penyusun inti atom.'
+  },
+  {
+    key: 'm_n',
+    name: 'Massa Diam Neutron',
+    symbol: 'm_n',
+    value: 1.6749275e-27,
+    unit: 'kg',
+    latex: 'm_n = 1.675 \\times 10^{-27} \\text{ kg} \\approx 1.0087 \\text{ sma}',
+    category: 'Fisika Inti',
+    description: 'Massa partikel neutron netral penyusun inti atom.'
+  },
+  {
+    key: 'H0',
+    name: 'Konstanta Laju Ekspansi Hubble',
+    symbol: 'H₀',
+    value: 70,
+    unit: 'km/s/Mpc',
+    latex: 'H_0 \\approx 70 \\text{ km/s/Mpc}',
+    category: 'Kosmologi',
+    description: 'Laju pemuaian ruang alam semesta per megaparsec jarak galaksi.'
   }
 ];
 

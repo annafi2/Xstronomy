@@ -13,7 +13,11 @@ import {
   Save,
   Activity,
   Binary,
-  Compass
+  Compass,
+  Zap,
+  Wand2,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { PRESET_FORMULAS } from '../../data/presetFormulas';
 import { CONSTANT_MAP } from '../../data/constantsData';
@@ -24,6 +28,7 @@ import {
   formatScientificLatex,
   convertToLatexMath 
 } from '../../utils/mathHelpers';
+import { detectOutputUnit } from '../../utils/unitInference';
 import { getCalcHistory, addCalcHistory, clearCalcHistory } from '../../utils/storage';
 import LatexRenderer from '../Common/LatexRenderer';
 import ConstantsModal from './ConstantsModal';
@@ -31,7 +36,12 @@ import GraphPlotter from './GraphPlotter';
 import CalculationHistory from './CalculationHistory';
 import EquationBuilder from './EquationBuilder';
 
-export const FormulaSolver = ({ targetPresetId }) => {
+export const FormulaSolver = ({ 
+  targetPresetId,
+  customFormulas = [],
+  onSaveCustomFormula,
+  onDeleteCustomFormula
+}) => {
   // Preset terpilih
   const [selectedPreset, setSelectedPreset] = useState(PRESET_FORMULAS[0]);
   const [selectedGradeFilter, setSelectedGradeFilter] = useState('Semua');
@@ -53,6 +63,12 @@ export const FormulaSolver = ({ targetPresetId }) => {
   const [historyList, setHistoryList] = useState([]);
   const [activeKeypadTab, setActiveKeypadTab] = useState('operators'); // 'operators', 'greek_astro', 'constants'
 
+  // Unit Detection & Custom Formula State
+  const [autoDetectUnit, setAutoDetectUnit] = useState(true);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [showSaveCustomModal, setShowSaveCustomModal] = useState(false);
+  const [customFormulaTitle, setCustomFormulaTitle] = useState('');
+
   const inputRef = useRef(null);
 
   // Muat riwayat awal
@@ -70,6 +86,21 @@ export const FormulaSolver = ({ targetPresetId }) => {
     }
   }, [targetPresetId]);
 
+  // Deteksi Satuan Real-Time dari Formula
+  const detectedUnitInfo = useMemo(() => {
+    return detectOutputUnit(expression, selectedPreset?.outputUnit);
+  }, [expression, selectedPreset]);
+
+  // Sinkronisasi Satuan Otomatis jika autoDetectUnit aktif
+  useEffect(() => {
+    if (autoDetectUnit && detectedUnitInfo && detectedUnitInfo.unit) {
+      setOutputUnit(detectedUnitInfo.unit);
+      if (isCustomMode && detectedUnitInfo.name) {
+        setOutputName(detectedUnitInfo.name);
+      }
+    }
+  }, [detectedUnitInfo, autoDetectUnit, isCustomMode]);
+
   // Ekstraksi variabel secara otomatis dari ekspresi
   const extractedVariables = useMemo(() => {
     return extractVariables(expression);
@@ -78,6 +109,7 @@ export const FormulaSolver = ({ targetPresetId }) => {
   // Muat preset terpilih
   const loadPreset = (preset) => {
     setSelectedPreset(preset);
+    setIsCustomMode(false);
     setExpression(preset.expression);
     setCustomTitle(preset.title);
     setOutputUnit(preset.outputUnit || '');
@@ -91,6 +123,77 @@ export const FormulaSolver = ({ targetPresetId }) => {
       });
     }
     setVariableValues(initVals);
+  };
+
+  // Mode Formula Bebas / Kustom Baru
+  const handleStartCustomFormula = () => {
+    setSelectedPreset(null);
+    setIsCustomMode(true);
+    setExpression('m * a');
+    setCustomTitle('Formula Kustom Baru');
+    setOutputName('Gaya (F)');
+    setOutputUnit('N (Newton)');
+    setVariableValues({ m: 5, a: 9.8 });
+  };
+
+  // Muat Formula Kustom dari database
+  const loadCustomFormula = (cf) => {
+    setSelectedPreset(null);
+    setIsCustomMode(true);
+    setExpression(cf.expression);
+    setCustomTitle(cf.title);
+    setOutputUnit(cf.outputUnit || '');
+    setOutputName(cf.outputName || 'Hasil Kalkulasi');
+    
+    let initVals = {};
+    if (cf.variables) {
+      if (typeof cf.variables === 'string') {
+        try {
+          const parsed = JSON.parse(cf.variables);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((v) => { initVals[v.key || v.name] = v.default || 10; });
+          } else if (typeof parsed === 'object') {
+            initVals = parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      } else if (Array.isArray(cf.variables)) {
+        cf.variables.forEach((v) => { initVals[v.key || v.name] = v.default || 10; });
+      } else if (typeof cf.variables === 'object') {
+        initVals = cf.variables;
+      }
+    }
+    setVariableValues(initVals);
+  };
+
+  // Simpan formula kustom ke cloud PostgreSQL / local
+  const handleSaveCustomFormulaSubmit = (e) => {
+    e.preventDefault();
+    if (!expression.trim()) {
+      alert('Ekspresi formula tidak boleh kosong.');
+      return;
+    }
+
+    const payload = {
+      title: customFormulaTitle.trim() || customTitle || 'Formula Kustom',
+      expression: expression.trim(),
+      latex: dynamicLatexPreview,
+      outputName: outputName || 'Hasil Kalkulasi',
+      outputUnit: outputUnit || detectedUnitInfo?.unit || '',
+      variables: extractedVariables.map((v) => ({
+        key: v,
+        label: `Variabel ${v}`,
+        default: variableValues[v] || 10,
+        unit: ''
+      }))
+    };
+
+    if (onSaveCustomFormula) {
+      onSaveCustomFormula(payload);
+    }
+    setShowSaveCustomModal(false);
+    setCustomFormulaTitle('');
   };
 
   // Pastikan semua variabel memiliki nilai default jika pengguna mengetik variabel baru
@@ -239,11 +342,22 @@ export const FormulaSolver = ({ targetPresetId }) => {
             <span className="preset-label">Pustaka Rumus Cepat:</span>
           </div>
           <div className="grade-pill-filters">
+            <button
+              className={`grade-pill ${isCustomMode ? 'grade-pill-active grade-pill-custom' : ''}`}
+              onClick={handleStartCustomFormula}
+              title="Mulai membuat formula fisika kustom dan bebas"
+            >
+              <Plus size={13} />
+              <span>Kustom / Bebas</span>
+            </button>
             {['Semua', '10', '11', '12'].map((g) => (
               <button
                 key={g}
-                className={`grade-pill ${selectedGradeFilter === g ? 'grade-pill-active' : ''}`}
-                onClick={() => setSelectedGradeFilter(g)}
+                className={`grade-pill ${!isCustomMode && selectedGradeFilter === g ? 'grade-pill-active' : ''}`}
+                onClick={() => {
+                  setIsCustomMode(false);
+                  setSelectedGradeFilter(g);
+                }}
               >
                 {g === 'Semua' ? 'Semua Kelas' : `Kelas ${g}`}
               </button>
@@ -252,10 +366,47 @@ export const FormulaSolver = ({ targetPresetId }) => {
         </div>
 
         <div className="preset-buttons-scroll">
+          {/* Tombol Buat Formula Kustom */}
+          <button
+            className={`preset-chip-btn custom-new-chip ${isCustomMode && !selectedPreset ? 'preset-chip-active' : ''}`}
+            onClick={handleStartCustomFormula}
+          >
+            <span className="chip-grade chip-grade-custom">+ Buat</span>
+            <span className="chip-title">Formula Kustom Baru</span>
+          </button>
+
+          {/* Formula Kustom Tersimpan Pengguna */}
+          {customFormulas.map((cf) => (
+            <div key={cf.id} className="custom-chip-container">
+              <button
+                className={`preset-chip-btn custom-saved-chip ${isCustomMode && customTitle === cf.title ? 'preset-chip-active' : ''}`}
+                onClick={() => loadCustomFormula(cf)}
+              >
+                <span className="chip-grade chip-grade-custom">Kustom</span>
+                <span className="chip-title">{cf.title}</span>
+              </button>
+              {onDeleteCustomFormula && (
+                <button
+                  className="custom-chip-del-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Hapus formula kustom "${cf.title}"?`)) {
+                      onDeleteCustomFormula(cf.id);
+                    }
+                  }}
+                  title="Hapus formula kustom ini"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Preset Bawaan */}
           {filteredPresets.map((preset) => (
             <button
               key={preset.id}
-              className={`preset-chip-btn ${selectedPreset?.id === preset.id ? 'preset-chip-active' : ''}`}
+              className={`preset-chip-btn ${!isCustomMode && selectedPreset?.id === preset.id ? 'preset-chip-active' : ''}`}
               onClick={() => loadPreset(preset)}
             >
               <span className="chip-grade">K{preset.grade}</span>
@@ -279,13 +430,27 @@ export const FormulaSolver = ({ targetPresetId }) => {
                 onChange={(e) => setCustomTitle(e.target.value)}
                 placeholder="Judul Formula / Permasalahan..."
               />
-              <button
-                className="btn btn-secondary btn-sm constants-lib-btn"
-                onClick={() => setShowConstantsModal(true)}
-              >
-                <Sparkles size={15} />
-                <span>Pustaka Konstanta Kosmik</span>
-              </button>
+              <div className="editor-top-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm save-custom-btn"
+                  onClick={() => {
+                    setCustomFormulaTitle(customTitle || '');
+                    setShowSaveCustomModal(true);
+                  }}
+                  title="Simpan formula dan variabel ini ke cloud PostgreSQL"
+                >
+                  <Save size={15} />
+                  <span>Simpan Kustom</span>
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm constants-lib-btn"
+                  onClick={() => setShowConstantsModal(true)}
+                >
+                  <Sparkles size={15} />
+                  <span>Pustaka Konstanta Kosmik</span>
+                </button>
+              </div>
             </div>
 
             {/* LaTeX Rendered Preview: Tampilan Matematika Otentik */}
@@ -325,6 +490,81 @@ export const FormulaSolver = ({ targetPresetId }) => {
                 >
                   ✕
                 </button>
+              </div>
+            </div>
+
+            {/* Real-Time Unit Detection Badge */}
+            <div className="detected-unit-banner glass-card">
+              <div className="unit-badge-left">
+                <div className="unit-pulse-indicator">
+                  <Zap size={15} className="accent-icon-gold" />
+                </div>
+                <div className="unit-badge-text">
+                  <span className="unit-badge-title">Satuan Terdeteksi Otomatis:</span>
+                  <strong className="unit-badge-val">{detectedUnitInfo?.unit || 'Satuan Bebas'}</strong>
+                  {detectedUnitInfo?.name && (
+                    <span className="unit-badge-desc">({detectedUnitInfo.name})</span>
+                  )}
+                </div>
+              </div>
+              <div className="unit-badge-actions">
+                <button
+                  type="button"
+                  className="btn btn-xs btn-outline-cyan"
+                  onClick={() => setOutputUnit(detectedUnitInfo?.unit || '')}
+                  title="Terapkan satuan terdeteksi ke hasil perhitungan"
+                >
+                  <Check size={13} />
+                  <span>Terapkan Satuan</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-xs ${autoDetectUnit ? 'btn-cyan-active' : 'btn-secondary'}`}
+                  onClick={() => setAutoDetectUnit(!autoDetectUnit)}
+                  title="Saklar sinkronisasi satuan otomatis saat formula diketik"
+                >
+                  <Wand2 size={13} />
+                  <span>{autoDetectUnit ? 'Otomatis: Aktif' : 'Otomatis: Manual'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Test Formula Chips to demo interactive unit detection */}
+            <div className="quick-formula-test-bar">
+              <span className="test-bar-label">
+                <Sparkles size={13} className="text-gold" />
+                Coba Deteksi Satuan Cepat:
+              </span>
+              <div className="test-chips-scroll">
+                {[
+                  { expr: 'm * a', label: 'Gaya (m × a)', expected: 'N (Newton)' },
+                  { expr: 'h * f', label: 'Energi Foton (h × f)', expected: 'J (Joule)' },
+                  { expr: '0.5 * m * v^2', label: 'Energi Kinetik (½mv²)', expected: 'J (Joule)' },
+                  { expr: 'V * I', label: 'Daya Listrik (V × I)', expected: 'W (Watt)' },
+                  { expr: 'I * R', label: 'Tegangan (I × R)', expected: 'V (Volt)' },
+                  { expr: 'B * I * L', label: 'Gaya Lorentz (B × I × L)', expected: 'N (Newton)' },
+                  { expr: 'mu0 * I / (2 * pi * r)', label: 'Medan Magnet Kawat', expected: 'T (Tesla)' },
+                  { expr: 'B * A', label: 'Fluks Magnet (B × A)', expected: 'Wb (Weber)' },
+                  { expr: 'rho * l / A', label: 'Hambatan Kawat (ρl/A)', expected: 'Ω (Ohm)' },
+                  { expr: 's / t', label: 'Kecepatan Linier (s/t)', expected: 'm/s' }
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="quick-formula-pill"
+                    onClick={() => {
+                      setIsCustomMode(true);
+                      setSelectedPreset(null);
+                      setExpression(item.expr);
+                      setCustomTitle(item.label);
+                      setOutputName(item.label);
+                    }}
+                    title={`Klik untuk memuat formula "${item.expr}" dan saksikan inferensi satuan otomatis: ${item.expected}`}
+                  >
+                    <code>{item.expr}</code>
+                    <span className="pill-target-unit">→ {item.expected.split(' ')[0]}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -596,6 +836,62 @@ export const FormulaSolver = ({ targetPresetId }) => {
           onClose={() => setShowConstantsModal(false)}
           onInsertConstant={(constKey) => handleInsertToken(constKey)}
         />
+      )}
+
+      {/* Save Custom Formula Modal */}
+      {showSaveCustomModal && (
+        <div className="modal-overlay" onClick={() => setShowSaveCustomModal(false)}>
+          <div className="modal-container glass-card save-custom-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-bar">
+              <div className="modal-header-title">
+                <Sparkles size={20} className="accent-icon-cyan" />
+                <h3>Simpan Formula Kustom ke Cloud Database</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowSaveCustomModal(false)}>
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSaveCustomFormulaSubmit} className="save-custom-form">
+              <div className="input-group">
+                <label className="input-label">Nama / Judul Formula:</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={customFormulaTitle}
+                  onChange={(e) => setCustomFormulaTitle(e.target.value)}
+                  placeholder="Contoh: Energi Foton Relativistik, Gaya Sentripetal..."
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Ekspresi Rumus Terdeteksi:</label>
+                <div className="custom-formula-preview-code">
+                  <code>{expression}</code>
+                </div>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Satuan Hasil (Terdeteksi Otomatis):</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={outputUnit}
+                  onChange={(e) => setOutputUnit(e.target.value)}
+                  placeholder="Contoh: J·s, Joule, Newton, m/s..."
+                />
+              </div>
+              <div className="modal-actions-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowSaveCustomModal(false)}>
+                  Batal
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} />
+                  <span>Simpan ke Database Realtime</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

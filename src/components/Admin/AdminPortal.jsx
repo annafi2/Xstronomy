@@ -17,9 +17,15 @@ import {
   Eye, 
   ArrowLeft,
   Key,
-  ShieldAlert
+  ShieldAlert,
+  GraduationCap,
+  HelpCircle,
+  Award,
+  BookOpen
 } from 'lucide-react';
 import { NEWS_CATEGORIES } from '../../data/newsData';
+import QuizManagerModal from './QuizManagerModal';
+import LatexRenderer from '../Common/LatexRenderer';
 
 const PRESET_COVERS = [
   { label: 'Eksoplanet & Nebula', url: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=1200&q=80' },
@@ -37,17 +43,30 @@ export const AdminPortal = ({
   onSaveArticle, 
   onDeleteArticle, 
   onResetNews,
-  onViewArticleInReader
+  onViewArticleInReader,
+  quizList = [],
+  onSaveQuizQuestion,
+  onDeleteQuizQuestion,
+  onResetQuiz
 }) => {
   // Login Gate State
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Portal View State: 'list' | 'editor'
+  // Admin Section Switcher: 'articles' | 'quiz'
+  const [adminSection, setAdminSection] = useState('articles');
+
+  // Quiz Modal State
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [quizSearchQuery, setQuizSearchQuery] = useState('');
+  const [selectedQuizGrade, setSelectedQuizGrade] = useState('Semua');
+
+  // Portal View State: 'list' | 'editor' (for articles)
   const [portalMode, setPortalMode] = useState('list');
   const [editingArticleId, setEditingArticleId] = useState(null);
 
-  // Search & Filter
+  // Search & Filter for articles
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
 
@@ -147,13 +166,49 @@ export const AdminPortal = ({
     });
   }, [news, selectedCategory, searchQuery]);
 
-  // Statistik Dashboard
+  // Statistik Dashboard Artikel
   const stats = useMemo(() => {
     const total = news.length;
     const categoriesCount = new Set(news.map((n) => n.category)).size;
     const featuredCount = news.filter((n) => n.featured).length;
     return { total, categoriesCount, featuredCount };
   }, [news]);
+
+  // Filter soal kuis di tabel admin
+  const filteredQuiz = useMemo(() => {
+    return (quizList || []).filter((item) => {
+      const matchGrade = selectedQuizGrade === 'Semua' || item.grade === parseInt(selectedQuizGrade, 10);
+      const query = quizSearchQuery.toLowerCase().trim();
+      const matchSearch =
+        !query ||
+        (item.question && item.question.toLowerCase().includes(query)) ||
+        (item.topic && item.topic.toLowerCase().includes(query)) ||
+        (item.difficulty && item.difficulty.toLowerCase().includes(query));
+      return matchGrade && matchSearch;
+    });
+  }, [quizList, selectedQuizGrade, quizSearchQuery]);
+
+  // Statistik Kuis Dashboard
+  const quizStats = useMemo(() => {
+    const list = quizList || [];
+    const total = list.length;
+    const grade12 = list.filter((q) => q.grade === 12).length;
+    const grade11 = list.filter((q) => q.grade === 11).length;
+    const grade10 = list.filter((q) => q.grade === 10).length;
+    return { total, grade12, grade11, grade10 };
+  }, [quizList]);
+
+  // Buka Modal Tambah Soal Kuis
+  const handleStartCreateQuiz = () => {
+    setEditingQuestion(null);
+    setIsQuizModalOpen(true);
+  };
+
+  // Buka Modal Edit Soal Kuis
+  const handleStartEditQuiz = (question) => {
+    setEditingQuestion(question);
+    setIsQuizModalOpen(true);
+  };
 
   // Jika belum login, tampilkan Portal Gate Login Khusus
   if (!isAdmin) {
@@ -242,8 +297,30 @@ export const AdminPortal = ({
         </div>
       </div>
 
-      {/* Dashboard Stats */}
-      <div className="portal-stats-grid">
+      {/* Admin Module Switcher */}
+      <div className="admin-module-switch-bar">
+        <button 
+          className={`admin-module-tab-btn ${adminSection === 'articles' ? 'active' : ''}`}
+          onClick={() => setAdminSection('articles')}
+        >
+          <FileText size={18} />
+          <span>Manajemen Artikel & Berita</span>
+          <span className="count-pill">{news.length}</span>
+        </button>
+        <button 
+          className={`admin-module-tab-btn ${adminSection === 'quiz' ? 'active' : ''}`}
+          onClick={() => setAdminSection('quiz')}
+        >
+          <GraduationCap size={18} />
+          <span>Bank Soal Kuis Fisika (Cloud Realtime)</span>
+          <span className="count-pill">{(quizList || []).length}</span>
+        </button>
+      </div>
+
+      {adminSection === 'articles' ? (
+        <>
+          {/* Dashboard Stats */}
+          <div className="portal-stats-grid">
         <div className="portal-stat-card glass-card">
           <div className="stat-icon-wrapper cyan-glow">
             <FileText size={22} />
@@ -577,6 +654,199 @@ export const AdminPortal = ({
             </div>
           </form>
         </div>
+      )}
+        </>
+      ) : (
+        /* Quiz Management Section */
+        <div className="admin-quiz-section">
+          {/* Quiz Dashboard Stats */}
+          <div className="portal-stats-grid">
+            <div className="portal-stat-card glass-card">
+              <div className="stat-icon-wrapper cyan-glow">
+                <GraduationCap size={22} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">Total Bank Soal Kuis</span>
+                <span className="stat-number">{quizStats.total}</span>
+              </div>
+            </div>
+
+            <div className="portal-stat-card glass-card">
+              <div className="stat-icon-wrapper purple-glow">
+                <Sparkles size={22} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">Soal Fisika Kelas 12</span>
+                <span className="stat-number">{quizStats.grade12}</span>
+              </div>
+            </div>
+
+            <div className="portal-stat-card glass-card">
+              <div className="stat-icon-wrapper gold-glow">
+                <BookOpen size={22} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">Soal Kelas 11 & 10</span>
+                <span className="stat-number">{quizStats.grade11 + quizStats.grade10}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quiz Table Section */}
+          <div className="portal-table-section glass-card">
+            <div className="table-top-controls">
+              <div className="controls-left">
+                <div className="search-input-wrapper portal-search">
+                  <Search size={16} className="search-icon" />
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Cari soal kuis berdasarkan konsep atau topik..."
+                    value={quizSearchQuery}
+                    onChange={(e) => setQuizSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <select
+                  className="input-field select-category-dropdown"
+                  value={selectedQuizGrade}
+                  onChange={(e) => setSelectedQuizGrade(e.target.value)}
+                >
+                  <option value="Semua">Semua Tingkat Kelas</option>
+                  <option value="12">Kelas 12 (Elektro, Magnet, Kuantum, Inti)</option>
+                  <option value="11">Kelas 11 (Mekanika & Gelombang)</option>
+                  <option value="10">Kelas 10 (Fundamental)</option>
+                </select>
+              </div>
+
+              <div className="controls-right-btns">
+                {onResetQuiz && (
+                  <button 
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      if (window.confirm('Pulihkan bank soal ke default dataset awal?')) {
+                        onResetQuiz();
+                      }
+                    }}
+                    title="Kembalikan bank soal ke sampel bawaan"
+                  >
+                    <RotateCcw size={15} />
+                    <span>Reset Soal Bawaan</span>
+                  </button>
+                )}
+                <button className="btn btn-primary" onClick={handleStartCreateQuiz}>
+                  <PlusCircle size={18} />
+                  <span>Tambah Soal Kuis Baru</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quiz Table */}
+            <div className="portal-table-wrapper">
+              <table className="portal-table">
+                <thead>
+                  <tr>
+                    <th>Kelas & Topik</th>
+                    <th>Pertanyaan Kuis (KaTeX)</th>
+                    <th>Kesulitan</th>
+                    <th>Kunci Jawaban</th>
+                    <th>Aksi Manajemen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredQuiz.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="table-empty-td">
+                        Belum ada soal kuis yang sesuai kriteria pencarian.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredQuiz.map((item) => {
+                      const correctOpt = (item.options || []).find((o) => o.isCorrect) || (item.options || [])[0];
+                      return (
+                        <tr key={item.id} className="portal-table-row">
+                          <td className="td-cat">
+                            <div className="quiz-grade-badge-group">
+                              <span className="badge badge-gold">Kelas {item.grade}</span>
+                              <span className="quiz-topic-text">{item.topic}</span>
+                            </div>
+                          </td>
+                          <td className="td-info">
+                            <div className="quiz-table-question">
+                              <LatexRenderer math={item.question} />
+                            </div>
+                            {item.formulaHint && (
+                              <div className="quiz-table-hint">
+                                <span className="hint-label">Petunjuk:</span>{' '}
+                                <LatexRenderer math={item.formulaHint} />
+                              </div>
+                            )}
+                          </td>
+                          <td className="td-cat">
+                            <span className={`badge ${
+                              item.difficulty === 'Mudah' ? 'badge-green' : 
+                              item.difficulty === 'Sedang' ? 'badge-cyan' : 'badge-gold'
+                            }`}>
+                              {item.difficulty || 'Sedang'}
+                            </span>
+                          </td>
+                          <td className="td-meta">
+                            <div className="quiz-correct-preview">
+                              {correctOpt ? (
+                                <LatexRenderer math={correctOpt.latex || correctOpt.text} />
+                              ) : (
+                                <span className="muted-date">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="td-actions">
+                            <div className="table-action-btns">
+                              <button
+                                className="action-icon-btn edit-action"
+                                onClick={() => handleStartEditQuiz(item)}
+                                title="Edit Soal Kuis"
+                              >
+                                <Edit size={15} />
+                              </button>
+                              <button
+                                className="action-icon-btn delete-action"
+                                onClick={() => {
+                                  if (window.confirm(`Hapus soal kuis ini?`)) {
+                                    onDeleteQuizQuestion(item.id);
+                                  }
+                                }}
+                                title="Hapus Soal Kuis"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quiz Manager Modal */}
+      {isQuizModalOpen && (
+        <QuizManagerModal
+          isOpen={isQuizModalOpen}
+          initialData={editingQuestion}
+          onClose={() => {
+            setIsQuizModalOpen(false);
+            setEditingQuestion(null);
+          }}
+          onSaveQuestion={(questionData) => {
+            onSaveQuizQuestion(questionData);
+            setIsQuizModalOpen(false);
+            setEditingQuestion(null);
+          }}
+        />
       )}
     </div>
   );

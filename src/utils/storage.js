@@ -172,3 +172,197 @@ export const setAdminAuth = (status) => {
     localStorage.removeItem(ADMIN_AUTH_KEY);
   }
 };
+
+// --- Quiz Questions Storage & Realtime API ---
+import { INITIAL_QUIZ_DATA } from '../data/quizData';
+
+const QUIZ_STORAGE_KEY = 'xstronomy_quiz_data';
+const CUSTOM_FORMULAS_STORAGE_KEY = 'xstronomy_custom_formulas';
+
+export const getStoredQuiz = () => {
+  try {
+    const data = localStorage.getItem(QUIZ_STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Gagal membaca kuis dari storage:', e);
+  }
+  localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(INITIAL_QUIZ_DATA));
+  return INITIAL_QUIZ_DATA;
+};
+
+export const saveQuizToLocal = (quizList) => {
+  try {
+    localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(quizList));
+  } catch (e) {
+    console.error('Gagal menyimpan kuis ke cache:', e);
+  }
+};
+
+export const fetchQuizFromApi = async (grade = null) => {
+  try {
+    const url = grade && grade !== 'Semua' ? `/api/quiz?grade=${grade}` : '/api/quiz';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+      saveQuizToLocal(result.data);
+      return result.data;
+    }
+  } catch (err) {
+    console.warn('Fallback kuis ke cache lokal (offline/dev):', err.message);
+  }
+  return getStoredQuiz();
+};
+
+export const addQuizQuestion = async (questionData) => {
+  const current = getStoredQuiz();
+  const tempId = 'quiz-' + Date.now();
+  const tempItem = { ...questionData, id: tempId };
+  const updatedLocal = [...current, tempItem];
+  saveQuizToLocal(updatedLocal);
+
+  try {
+    const response = await fetch('/api/quiz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(questionData)
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const synced = current.concat([result.data]);
+        saveQuizToLocal(synced);
+        return synced;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal menyimpan soal kuis ke serverless DB:', err.message);
+  }
+  return updatedLocal;
+};
+
+export const updateQuizQuestion = async (id, questionData) => {
+  const current = getStoredQuiz();
+  const updatedLocal = current.map((q) => (q.id === id ? { ...q, ...questionData } : q));
+  saveQuizToLocal(updatedLocal);
+
+  try {
+    const response = await fetch('/api/quiz', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...questionData })
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const synced = current.map((q) => (q.id === id ? result.data : q));
+        saveQuizToLocal(synced);
+        return synced;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal update soal kuis ke serverless DB:', err.message);
+  }
+  return updatedLocal;
+};
+
+export const deleteQuizQuestion = async (id) => {
+  const current = getStoredQuiz();
+  const updatedLocal = current.filter((q) => q.id !== id);
+  saveQuizToLocal(updatedLocal);
+
+  try {
+    await fetch(`/api/quiz?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+  } catch (err) {
+    console.warn('Gagal hapus soal kuis di serverless DB:', err.message);
+  }
+  return updatedLocal;
+};
+
+export const resetQuizToDefault = () => {
+  localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(INITIAL_QUIZ_DATA));
+  return INITIAL_QUIZ_DATA;
+};
+
+// --- Custom Formulas Storage & Realtime API ---
+export const getStoredCustomFormulas = () => {
+  try {
+    const data = localStorage.getItem(CUSTOM_FORMULAS_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const saveCustomFormulasToLocal = (formulas) => {
+  try {
+    localStorage.setItem(CUSTOM_FORMULAS_STORAGE_KEY, JSON.stringify(formulas));
+  } catch (e) {
+    console.error('Gagal menyimpan formula kustom:', e);
+  }
+};
+
+export const fetchCustomFormulasFromApi = async () => {
+  try {
+    const response = await fetch('/api/custom-formulas');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+    if (result.success && Array.isArray(result.data)) {
+      saveCustomFormulasToLocal(result.data);
+      return result.data;
+    }
+  } catch (err) {
+    console.warn('Fallback formula kustom ke lokal:', err.message);
+  }
+  return getStoredCustomFormulas();
+};
+
+export const saveCustomFormula = async (formulaData) => {
+  const current = getStoredCustomFormulas();
+  const tempId = 'cf-' + Date.now();
+  const tempItem = { ...formulaData, id: tempId };
+  const updatedLocal = [tempItem, ...current];
+  saveCustomFormulasToLocal(updatedLocal);
+
+  try {
+    const response = await fetch('/api/custom-formulas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formulaData)
+    });
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        const synced = [result.data, ...current];
+        saveCustomFormulasToLocal(synced);
+        return synced;
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal simpan formula kustom ke DB:', err.message);
+  }
+  return updatedLocal;
+};
+
+export const deleteCustomFormula = async (id) => {
+  const current = getStoredCustomFormulas();
+  const updatedLocal = current.filter((f) => f.id !== id);
+  saveCustomFormulasToLocal(updatedLocal);
+
+  try {
+    await fetch(`/api/custom-formulas?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+  } catch (err) {
+    console.warn('Gagal hapus formula kustom di DB:', err.message);
+  }
+  return updatedLocal;
+};
+

@@ -37,3 +37,33 @@ model CalculationHistory {
 
   @@map("calculation_histories")
 }
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  grade         Int      @default(12) // 10, 11, 12
+  topic         String   // e.g. "Listrik Statis & Searah", "Medan Magnet", "Relativitas Khusus", "Fisika Kuantum", "Fisika Inti"
+  question      String   @db.Text
+  questionLatex String?  @db.Text
+  options       Json     // Array of { text: string, latex?: string, isCorrect: boolean }
+  explanation   String   @db.Text
+  difficulty    String   @default("Sedang") // "Mudah" | "Sedang" | "Tantangan"
+  formulaHint   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("quiz_questions")
+}
+
+model CustomFormula {
+  id           String   @id @default(cuid())
+  title        String
+  expression   String
+  latex        String?
+  detectedUnit String?
+  variables    Json?    // Array of { key, label, unit, default }
+  category     String   @default("Kustom")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("custom_formulas")
+}

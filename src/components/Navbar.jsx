@@ -9,7 +9,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  Compass
+  Compass,
+  GraduationCap
 } from 'lucide-react';
 
 export const Navbar = ({ 
@@ -23,6 +24,7 @@ export const Navbar = ({
   const navItems = [
     { id: 'news', label: 'Berita Kosmis', shortLabel: 'Berita', icon: Telescope },
     { id: 'learn', label: 'Belajar Fisika', shortLabel: 'Belajar', icon: BookOpen },
+    { id: 'quiz', label: 'Kuis & Soal', shortLabel: 'Kuis', icon: GraduationCap },
     { id: 'solver', label: 'Kalkulator Formula', shortLabel: 'Kalkulator', icon: Calculator },
     { id: 'sims', label: 'Simulasi Orbit', shortLabel: 'Simulasi', icon: Orbit },
     { id: 'admin', label: 'Portal Admin', shortLabel: 'Admin', icon: ShieldCheck }

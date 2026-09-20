@@ -15,6 +15,9 @@ import TopicDetailModal from './components/Learn/TopicDetailModal';
 // Formula Solver Components
 import FormulaSolver from './components/FormulaSolver/FormulaSolver';
 
+// Quiz & Bank Soal Components
+import QuizView from './components/Quiz/QuizView';
+
 // Simulations Components
 import SimulationsView from './components/Simulations/SimulationsView';
 
@@ -30,16 +33,32 @@ import {
   deleteNewsArticle, 
   resetNewsToDefault,
   isAdminAuthenticated,
-  setAdminAuth 
+  setAdminAuth,
+  getStoredQuiz,
+  fetchQuizFromApi,
+  addQuizQuestion,
+  updateQuizQuestion,
+  deleteQuizQuestion,
+  resetQuizToDefault,
+  getStoredCustomFormulas,
+  fetchCustomFormulasFromApi,
+  saveCustomFormula,
+  deleteCustomFormula
 } from './utils/storage';
 
 export function App() {
-  // Navigation tab: 'news' | 'learn' | 'solver' | 'sims' | 'admin'
+  // Navigation tab: 'news' | 'learn' | 'quiz' | 'solver' | 'sims' | 'admin'
   const [activeTab, setActiveTab] = useState('news');
 
   // News state
   const [news, setNews] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Quiz state
+  const [quizList, setQuizList] = useState([]);
+
+  // Custom formulas state
+  const [customFormulas, setCustomFormulas] = useState([]);
 
   // Admin session state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -51,16 +70,30 @@ export function App() {
   // Target preset to pass to Formula Solver
   const [targetPresetId, setTargetPresetId] = useState(null);
 
-  // Inisialisasi data berita dan sesi admin
+  // Inisialisasi data berita, kuis, formula kustom, dan sesi admin
   useEffect(() => {
     // Muat data awal dari cache lokal
     setNews(getStoredNews());
+    setQuizList(getStoredQuiz());
+    setCustomFormulas(getStoredCustomFormulas());
     setIsAdmin(isAdminAuthenticated());
 
     // Fetch pembaruan data secara realtime dari Prisma Postgres DB
     fetchNewsFromApi().then((data) => {
       if (data && data.length > 0) {
         setNews(data);
+      }
+    });
+
+    fetchQuizFromApi().then((data) => {
+      if (data && data.length > 0) {
+        setQuizList(data);
+      }
+    });
+
+    fetchCustomFormulasFromApi().then((data) => {
+      if (data && data.length > 0) {
+        setCustomFormulas(data);
       }
     });
   }, []);
@@ -94,6 +127,38 @@ export function App() {
   const handleResetNews = () => {
     const defaultData = resetNewsToDefault();
     setNews(defaultData);
+  };
+
+  // Quiz Handlers
+  const handleSaveQuizQuestion = async (questionData) => {
+    if (questionData.id) {
+      const updated = await updateQuizQuestion(questionData.id, questionData);
+      setQuizList(updated);
+    } else {
+      const updated = await addQuizQuestion(questionData);
+      setQuizList(updated);
+    }
+  };
+
+  const handleDeleteQuizQuestion = async (id) => {
+    const updated = await deleteQuizQuestion(id);
+    setQuizList(updated);
+  };
+
+  const handleResetQuiz = () => {
+    const defaultData = resetQuizToDefault();
+    setQuizList(defaultData);
+  };
+
+  // Custom Formula Handlers
+  const handleSaveCustomFormula = async (formulaData) => {
+    const updated = await saveCustomFormula(formulaData);
+    setCustomFormulas(updated);
+  };
+
+  const handleDeleteCustomFormula = async (id) => {
+    const updated = await deleteCustomFormula(id);
+    setCustomFormulas(updated);
   };
 
   // Navigasi silang: Belajar -> Solver
@@ -141,8 +206,22 @@ export function App() {
           />
         )}
 
+        {activeTab === 'quiz' && (
+          <QuizView
+            questions={quizList}
+            quizList={quizList}
+            onOpenInSolver={handleOpenInSolver}
+            onOpenSolver={handleOpenInSolver}
+          />
+        )}
+
         {activeTab === 'solver' && (
-          <FormulaSolver targetPresetId={targetPresetId} />
+          <FormulaSolver 
+            targetPresetId={targetPresetId} 
+            customFormulas={customFormulas}
+            onSaveCustomFormula={handleSaveCustomFormula}
+            onDeleteCustomFormula={handleDeleteCustomFormula}
+          />
         )}
 
         {activeTab === 'sims' && (
@@ -159,6 +238,10 @@ export function App() {
             onDeleteArticle={handleDeleteArticle}
             onResetNews={handleResetNews}
             onViewArticleInReader={(article) => setSelectedArticle(article)}
+            quizList={quizList}
+            onSaveQuizQuestion={handleSaveQuizQuestion}
+            onDeleteQuizQuestion={handleDeleteQuizQuestion}
+            onResetQuiz={handleResetQuiz}
           />
         )}
       </main>
