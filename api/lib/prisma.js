@@ -4,6 +4,8 @@ let prisma;
 
 const databaseUrl = 
   process.env.DATABASE_URL || 
+  process.env.PRISMA_DATABASE_URL ||
+  process.env.POSTGRES_URL ||
   process.env.xstronomy_PRISMA_DATABASE_URL || 
   process.env.xstronomy_DATABASE_URL || 
   process.env.xstronomy_POSTGRES_URL;
